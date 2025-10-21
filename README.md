@@ -90,6 +90,34 @@ Training System is an internal learning & compliance platform built with Next.js
 
 ---
 
+## Running with Docker
+
+Docker makes the project portable and reproducible—no need to install Node.js, pnpm, or MySQL locally. It also enables testers and teammates to spin up the full stack with a single command and is production-ready for container-based deployments.
+
+### Build and run the app container
+
+```bash
+docker build -t enterprise-training-suite .
+docker run --rm -p 3000:3000 \
+  -e DATABASE_URL="mysql://user:pass@host:3306/trainingsystem" \
+  -e JWT_SECRET="replace-me" \
+  enterprise-training-suite
+```
+
+The container runs `pnpm prisma migrate deploy` before starting the Next.js server, ensuring migrations are applied automatically.
+
+### Local Docker Compose stack
+
+Spin up the application together with a MySQL database:
+
+```bash
+docker compose up --build
+```
+
+This uses the provided `docker-compose.yml` to orchestrate both services. Customize environment variables (database credentials, JWT secret, ports) directly in the compose file or with an `.env` that Docker Compose can read. The `mysql-data` volume persists database state between runs.
+
+---
+
 ## Database & Migrations
 
 - Prisma schema lives in `prisma/schema.prisma`.  
@@ -203,6 +231,9 @@ types/                      – shared TypeScript definitions
 
 - **Prisma `EPERM ... query_engine-windows.dll.node` on Windows**  
   - Close all `node.exe`/Next.js processes (Task Manager), run PowerShell as Administrator, remove `.prisma/client` directory, and rerun `pnpm prisma generate`.
+
+- **Docker build fails during Prisma steps**  
+  - Ensure `DATABASE_URL` is provided when running the container or compose stack so migrations can run. For development, you can reuse the compose MySQL instance connection string.
 
 - **Schema drift warnings**  
   - The project includes manual SQL migrations (`20251021171000_add_question_asset_relation`, `20251021172000_add_attempt_asset_column`) to reconcile shared dev DBs. Execute them with `pnpm prisma db execute`.

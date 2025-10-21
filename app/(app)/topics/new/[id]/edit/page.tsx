@@ -9,12 +9,13 @@ async function getTopic(id: string) {
 
 import TopicForm from '@/components/TopicForm'
 
-export default async function EditTopicPage({ params }: { params: { id: string } }) {
+export default async function EditTopicPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession()
   if (!session) return <div className="p-6">Unauthorized</div>
   if (session.role !== 'ADMIN' && session.role !== 'TRAINER') return <div className="p-6">Forbidden</div>
 
-  const topic = await getTopic(params.id)
+  const { id } = await params
+  const topic = await getTopic(id)
   if (!topic) return <div className="p-6">Not Found</div>
 
   return (
