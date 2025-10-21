@@ -48,7 +48,7 @@ export default async function EditTopicPage({
         </div>
       )}
 
-      <form action={`/topics/${topic.id}/edit`} method="POST" className="space-y-4 max-w-3xl">
+      <form action={`/topics/${topic.id}/delete/edit/submit`} method="POST" className="space-y-4 max-w-3xl">
         <div>
           <label className="block mb-1 font-medium">Title *</label>
           <input

@@ -1,0 +1,12 @@
+.git
+.github
+.vscode
+node_modules
+.next
+pnpm-store
+Dockerfile
+docker-compose.yml
+docker-compose.yaml
+*.log
+.env*
+tmp*
