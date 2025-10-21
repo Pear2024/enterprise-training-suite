@@ -1,15 +1,11 @@
-import { Prisma } from '@prisma/client';
-
-const { AssignmentStatus } = Prisma;
-type AssignmentStatusType = Prisma.AssignmentStatus;
 import { getSession, hasRole } from '@/lib/auth';
 import { getReportsOverview, ReportsOverview } from '@/lib/reporting';
 
-const statusLabels: Record<AssignmentStatusType, string> = {
-  [AssignmentStatus.ASSIGNED]: 'Assigned',
-  [AssignmentStatus.IN_PROGRESS]: 'In Progress',
-  [AssignmentStatus.COMPLETED]: 'Completed',
-  [AssignmentStatus.CANCELED]: 'Canceled',
+const statusLabels: Record<keyof ReportsOverview['summary']['byStatus'], string> = {
+  ASSIGNED: 'Assigned',
+  IN_PROGRESS: 'In Progress',
+  COMPLETED: 'Completed',
+  CANCELED: 'Canceled',
 };
 
 const numberFormatter = new Intl.NumberFormat('en-US');
@@ -60,20 +56,20 @@ function SummaryGrid({ overview }: { overview: ReportsOverview }) {
     { title: 'Overdue Assignments', value: overview.summary.overdueAssignments },
     { title: 'Topics Tracked', value: overview.summary.topicsTracked },
     {
-      title: statusLabels[AssignmentStatus.COMPLETED],
-      value: overview.summary.byStatus[AssignmentStatus.COMPLETED],
+      title: statusLabels.COMPLETED,
+      value: overview.summary.byStatus.COMPLETED,
     },
     {
-      title: statusLabels[AssignmentStatus.IN_PROGRESS],
-      value: overview.summary.byStatus[AssignmentStatus.IN_PROGRESS],
+      title: statusLabels.IN_PROGRESS,
+      value: overview.summary.byStatus.IN_PROGRESS,
     },
     {
-      title: statusLabels[AssignmentStatus.ASSIGNED],
-      value: overview.summary.byStatus[AssignmentStatus.ASSIGNED],
+      title: statusLabels.ASSIGNED,
+      value: overview.summary.byStatus.ASSIGNED,
     },
     {
-      title: statusLabels[AssignmentStatus.CANCELED],
-      value: overview.summary.byStatus[AssignmentStatus.CANCELED],
+      title: statusLabels.CANCELED,
+      value: overview.summary.byStatus.CANCELED,
     },
   ];
 
@@ -114,13 +110,13 @@ function TopicTable({ overview }: { overview: ReportsOverview }) {
               <td className="px-4 py-2 text-gray-700">{topic.status}</td>
               <td className="px-4 py-2 text-right">{numberFormatter.format(topic.assignments.total)}</td>
               <td className="px-4 py-2 text-right">
-                {numberFormatter.format(topic.assignments.byStatus[AssignmentStatus.COMPLETED])}
+                {numberFormatter.format(topic.assignments.byStatus.COMPLETED)}
               </td>
               <td className="px-4 py-2 text-right">
-                {numberFormatter.format(topic.assignments.byStatus[AssignmentStatus.IN_PROGRESS])}
+                {numberFormatter.format(topic.assignments.byStatus.IN_PROGRESS)}
               </td>
               <td className="px-4 py-2 text-right">
-                {numberFormatter.format(topic.assignments.byStatus[AssignmentStatus.ASSIGNED])}
+                {numberFormatter.format(topic.assignments.byStatus.ASSIGNED)}
               </td>
               <td className="px-4 py-2 text-right">{topic.completionRatePct}%</td>
             </tr>
