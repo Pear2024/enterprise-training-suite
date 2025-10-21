@@ -83,7 +83,10 @@ export default async function Page() {
       });
       const progress = assets.length
         ? await prisma.assetProgress.findMany({
-            where: { assignmentId: assignment.id, assetId: { in: assets.map((x) => x.id) } },
+            where: {
+              assignmentId: assignment.id,
+              assetId: { in: assets.map((asset: { id: number }) => asset.id) },
+            },
             select: { assetId: true, completedAt: true },
           })
         : [];
