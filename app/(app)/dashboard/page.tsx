@@ -9,6 +9,12 @@ type RawAssignment = {
   topic: { id: number; code: string; title: string };
 };
 
+type AssetProgressRow = {
+  assetId: number;
+  completedAt: Date | null;
+};
+
+
 type DashboardAssignment = {
   id: number;
   status: string;
@@ -81,7 +87,7 @@ export default async function Page() {
         orderBy: { order: "asc" },
         select: { id: true, order: true, title: true, isRequired: true },
       });
-      const progress = assets.length
+      const progress: AssetProgressRow[] = assets.length
         ? await prisma.assetProgress.findMany({
             where: {
               assignmentId: assignment.id,
@@ -90,7 +96,7 @@ export default async function Page() {
             select: { assetId: true, completedAt: true },
           })
         : [];
-      const doneSet = new Set(progress.filter((item) => item.completedAt).map((item) => item.assetId));
+      const doneSet = new Set(progress.filter((item) => item.completedAt !== null).map((item) => item.assetId));
       const reqTotal = assets.filter((x) => x.isRequired).length;
       const reqDone = assets.filter((x) => x.isRequired && doneSet.has(x.id)).length;
       const pct = reqTotal ? Math.round((reqDone / reqTotal) * 100) : 100;
