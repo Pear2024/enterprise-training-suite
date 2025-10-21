@@ -215,4 +215,4 @@ types/                      – shared TypeScript definitions
 
 ---
 
-Happy coding! 🚀
+Ruttakorn T
