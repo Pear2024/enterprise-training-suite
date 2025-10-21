@@ -14,6 +14,13 @@ type AssetProgressRow = {
   completedAt: Date | null;
 };
 
+type AssetRow = {
+  id: number;
+  order: number;
+  title: string;
+  isRequired: boolean;
+};
+
 
 type DashboardAssignment = {
   id: number;
@@ -82,7 +89,7 @@ export default async function Page() {
 
   const items: DashboardAssignment[] = await Promise.all(
     rawAssignments.map(async (assignment) => {
-      const assets = await prisma.trainingAsset.findMany({
+      const assets: AssetRow[] = await prisma.trainingAsset.findMany({
         where: { topicId: assignment.topicId },
         orderBy: { order: "asc" },
         select: { id: true, order: true, title: true, isRequired: true },
@@ -97,15 +104,15 @@ export default async function Page() {
           })
         : [];
       const doneSet = new Set(progress.filter((item) => item.completedAt !== null).map((item) => item.assetId));
-      const reqTotal = assets.filter((x) => x.isRequired).length;
-      const reqDone = assets.filter((x) => x.isRequired && doneSet.has(x.id)).length;
+      const reqTotal = assets.filter((asset) => asset.isRequired).length;
+      const reqDone = assets.filter((asset) => asset.isRequired && doneSet.has(asset.id)).length;
       const pct = reqTotal ? Math.round((reqDone / reqTotal) * 100) : 100;
-      const assetRows = assets.map((x) => ({
-        id: x.id,
-        order: x.order,
-        title: x.title,
-        isRequired: x.isRequired,
-        passed: doneSet.has(x.id),
+      const assetRows = assets.map((asset) => ({
+        id: asset.id,
+        order: asset.order,
+        title: asset.title,
+        isRequired: asset.isRequired,
+        passed: doneSet.has(asset.id),
       }));
       const completion = await prisma.completion.findUnique({
         where: { uniq_completion_per_topic: { userId: session.userId, topicId: assignment.topicId } },
