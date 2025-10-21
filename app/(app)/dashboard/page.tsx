@@ -2,6 +2,13 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import Link from "next/link";
 
+type RawAssignment = {
+  id: number;
+  status: string;
+  topicId: number;
+  topic: { id: number; code: string; title: string };
+};
+
 type DashboardAssignment = {
   id: number;
   status: string;
@@ -56,7 +63,7 @@ export default async function Page() {
     );
   }
 
-  const rawAssignments = await prisma.assignment.findMany({
+  const rawAssignments: RawAssignment[] = await prisma.assignment.findMany({
     where: { userId: session.userId },
     orderBy: { createdAt: "desc" },
     select: {
@@ -68,15 +75,15 @@ export default async function Page() {
   });
 
   const items: DashboardAssignment[] = await Promise.all(
-    rawAssignments.map(async (a) => {
+    rawAssignments.map(async (assignment) => {
       const assets = await prisma.trainingAsset.findMany({
-        where: { topicId: a.topicId },
+        where: { topicId: assignment.topicId },
         orderBy: { order: "asc" },
         select: { id: true, order: true, title: true, isRequired: true },
       });
       const progress = assets.length
         ? await prisma.assetProgress.findMany({
-            where: { assignmentId: a.id, assetId: { in: assets.map((x) => x.id) } },
+            where: { assignmentId: assignment.id, assetId: { in: assets.map((x) => x.id) } },
             select: { assetId: true, completedAt: true },
           })
         : [];
@@ -92,14 +99,14 @@ export default async function Page() {
         passed: doneSet.has(x.id),
       }));
       const completion = await prisma.completion.findUnique({
-        where: { uniq_completion_per_topic: { userId: session.userId, topicId: a.topicId } },
+        where: { uniq_completion_per_topic: { userId: session.userId, topicId: assignment.topicId } },
         select: { completedAt: true },
       });
       return {
-        id: a.id,
-        status: a.status,
-        topicId: a.topicId,
-        topic: { code: a.topic.code, title: a.topic.title },
+        id: assignment.id,
+        status: assignment.status,
+        topicId: assignment.topicId,
+        topic: { code: assignment.topic.code, title: assignment.topic.title },
         required: reqTotal,
         done: reqDone,
         pct,
@@ -180,3 +187,4 @@ function RoleInfo({ title, bullets, note }: { title: string; bullets: string[]; 
     </div>
   );
 }
+
