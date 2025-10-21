@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { z, ZodError } from "zod";
 import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -55,7 +56,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     if (e instanceof ZodError) {
       return NextResponse.redirect(new URL(`/topics/${id}/delete/edit?error=invalid`, req.url), 303);
     }
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2025") {
+    if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
       return NextResponse.redirect(new URL("/topics?error=notfound", req.url), 303);
     }
     console.error("POST /topics/[id]/delete/edit failed", e);
