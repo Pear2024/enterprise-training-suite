@@ -90,7 +90,7 @@ export default async function Page() {
             select: { assetId: true, completedAt: true },
           })
         : [];
-      const doneSet = new Set(progress.filter((p) => p.completedAt).map((p) => p.assetId));
+      const doneSet = new Set(progress.filter((item) => item.completedAt).map((item) => item.assetId));
       const reqTotal = assets.filter((x) => x.isRequired).length;
       const reqDone = assets.filter((x) => x.isRequired && doneSet.has(x.id)).length;
       const pct = reqTotal ? Math.round((reqDone / reqTotal) * 100) : 100;
@@ -190,4 +190,5 @@ function RoleInfo({ title, bullets, note }: { title: string; bullets: string[]; 
     </div>
   );
 }
+
 
