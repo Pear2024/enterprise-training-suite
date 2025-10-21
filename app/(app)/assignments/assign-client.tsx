@@ -7,6 +7,15 @@ type UserItem = { id: number; username: string; email?: string | null; role: 'AD
 type TopicItem = { id: number; code: string; title: string; status?: string };
 
 type PageResp<T> = { items: T[]; page: number; pageSize: number; total: number; totalPages: number };
+type AssignmentResponse = { count?: number; error?: string };
+
+function isAssignmentResponse(value: unknown): value is AssignmentResponse {
+  if (!value || typeof value !== 'object') return false;
+  const maybe = value as Record<string, unknown>;
+  const countValid = !('count' in maybe) || typeof maybe.count === 'number';
+  const errorValid = !('error' in maybe) || typeof maybe.error === 'string';
+  return countValid && errorValid;
+}
 
 export default function AssignClient() {
   const router = useRouter();
@@ -72,12 +81,14 @@ export default function AssignClient() {
         body: JSON.stringify({ userIds: selectedUsers, topicIds: selectedTopics, dueAt: dueAt || null }),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => ({} as any));
-        alert(j?.error || 'Assign failed');
+        const parsed: unknown = await res.json().catch(() => null);
+        const message = isAssignmentResponse(parsed) && parsed.error ? parsed.error : 'Assign failed';
+        alert(message);
         return;
       }
-      const j = await res.json();
-      router.push(`/assignments?saved=1&count=${j.count ?? ''}`);
+      const parsed: unknown = await res.json().catch(() => null);
+      const countValue = isAssignmentResponse(parsed) ? parsed.count : undefined;
+      router.push(`/assignments?saved=1&count=${countValue ?? ''}`);
     } finally {
       setBusy(false);
     }
@@ -138,13 +149,13 @@ export default function AssignClient() {
             </select>
           </div>
           <div className="max-h-80 overflow-auto rounded border">
-            {topics.items && (topics.items as any[]).map((t: any) => (
+            {topics.items.map((t) => (
               <label key={t.id} className="flex cursor-pointer items-center gap-2 border-b px-2 py-1 text-sm">
                 <input type="checkbox" checked={selectedTopics.includes(t.id)} onChange={() => toggle(t.id, selectedTopics, setSelectedTopics)} />
-                <span className="truncate">{t.code} — {t.title}</span>
+                <span className="truncate">{t.code} - {t.title}</span>
               </label>
             ))}
-            {!topics.items?.length && <div className="p-2 text-sm text-gray-500">No topics</div>}
+            {!topics.items.length && <div className="p-2 text-sm text-gray-500">No topics</div>}
           </div>
           <div className="mt-2 flex items-center justify-between text-xs text-gray-600">
             <div>Page {topics.page}/{topics.totalPages} • {topics.total} topics</div>
@@ -182,4 +193,6 @@ export default function AssignClient() {
     </section>
   );
 }
+
+
 

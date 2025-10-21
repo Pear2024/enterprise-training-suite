@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { AssetItem } from '../types';
 
 export default function AssetList({ assignmentId, assets, topicId, canManage }: { assignmentId: number; assets: AssetItem[]; topicId?: number; canManage?: boolean }) {
-  const [items, setItems] = useState<AssetItem[]>(assets);
   const router = useRouter();
 
   // No manual mark-done; completion happens on quiz pass
@@ -33,7 +31,7 @@ export default function AssetList({ assignmentId, assets, topicId, canManage }: 
 
   return (
     <div className="space-y-4">
-      {items.map((a) => (
+      {assets.map((a) => (
         <div key={a.id} className="rounded-2xl border p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="font-medium">

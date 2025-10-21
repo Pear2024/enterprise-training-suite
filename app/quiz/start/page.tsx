@@ -34,13 +34,13 @@ export default async function StartQuiz({ searchParams }: { searchParams: Promis
     }
   }
 
-  const existing = await (prisma as any).attempt.findFirst({
+  const existing = await prisma.attempt.findFirst({
     where: { assignmentId: asg.id, userId: session.userId, assetId: Number.isFinite(assetId) ? Number(assetId) : null, submittedAt: null },
     orderBy: { startedAt: 'desc' },
     select: { id: true },
   });
 
-  const attempt = existing ?? await (prisma as any).attempt.create({
+  const attempt = existing ?? await prisma.attempt.create({
     data: { assignmentId: asg.id, userId: session.userId, assetId: Number.isFinite(assetId) ? Number(assetId) : null },
     select: { id: true },
   });

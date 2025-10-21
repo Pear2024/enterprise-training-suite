@@ -3,6 +3,7 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSession } from '@/lib/auth';
+import { Prisma } from '@prisma/client';
 
 type UserRole = 'ADMIN' | 'TRAINER' | 'EMPLOYEE';
 
@@ -18,19 +19,18 @@ export async function GET(req: Request) {
   const skip = (page - 1) * pageSize;
   const take = pageSize;
 
-  const where: any = {
-    ...(roleParam ? { role: roleParam } : {}),
-    ...(q
-      ? {
-          OR: [
-            { username: { contains: q } },
-            { email: { contains: q } },
-            { firstName: { contains: q } },
-            { lastName: { contains: q } },
-          ],
-        }
-      : {}),
-  };
+  const where: Prisma.UserWhereInput = {};
+  if (roleParam) {
+    where.role = roleParam;
+  }
+  if (q) {
+    where.OR = [
+      { username: { contains: q } },
+      { email: { contains: q } },
+      { firstName: { contains: q } },
+      { lastName: { contains: q } },
+    ];
+  }
 
   const [total, items] = await Promise.all([
     prisma.user.count({ where }),
@@ -51,4 +51,3 @@ export async function GET(req: Request) {
     totalPages: Math.max(1, Math.ceil(total / pageSize)),
   });
 }
-

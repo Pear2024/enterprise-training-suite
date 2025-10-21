@@ -11,13 +11,13 @@ export async function GET(_req: Request, ctx: { params: Promise<{ attemptId: str
   const session = await getSession();
   if (!session?.userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const attempt = await (prisma as any).attempt.findFirst({
+  const attempt = await prisma.attempt.findFirst({
     where: { id, userId: session.userId },
     select: { id: true, assignmentId: true, assetId: true, submittedAt: true, assignment: { select: { topicId: true } } },
   });
   if (!attempt) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const questions = await (prisma as any).question.findMany({
+  const questions = await prisma.question.findMany({
     where: attempt.assetId ? { assetId: attempt.assetId } : { topicId: attempt.assignment.topicId },
     orderBy: [{ order: 'asc' }, { id: 'asc' }],
     select: {
@@ -38,4 +38,3 @@ export async function GET(_req: Request, ctx: { params: Promise<{ attemptId: str
     answers,
   });
 }
-
