@@ -16,8 +16,14 @@ async function getAssets(topicId: string): Promise<LessonAssetsResponse> {
     headers: { cookie, accept: 'application/json' },
   });
   if (res.status === 401) redirect(`/login?next=/lesson/${topicId}`);
-  const data = await res.json().catch(() => null);
-  if (!res.ok) throw new Error((data as any)?.error || 'Failed to load assets');
+  const data: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const message =
+      data && typeof data === 'object' && data !== null && 'error' in data && typeof (data as { error?: unknown }).error === 'string'
+        ? (data as { error: string }).error
+        : 'Failed to load assets';
+    throw new Error(message);
+  }
   return data as LessonAssetsResponse;
 }
 
@@ -39,5 +45,4 @@ export default async function LessonPage({ params, searchParams }: { params: Pro
     </main>
   );
 }
-
 

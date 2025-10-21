@@ -52,9 +52,6 @@ export default async function TopicsPage({
   const proto = h.get("x-forwarded-proto") ?? "http";
   const baseUrl = `${proto}://${host}`;
 
-  const apiPath = qs.toString()
-    ? `/api/topics?${qs.toString()}`
-    : `/api/topics`;
   const apiUrl = `${baseUrl}/api/topics?${qs.toString()}`;
 
   // ส่ง cookie ต่อให้ API เพื่อให้ getSession ใน API ใช้ได้
@@ -78,7 +75,6 @@ export default async function TopicsPage({
 
   const json: TopicsResponse = await res.json();
   const items: Topic[] = Array.isArray(json.items) ? json.items : [];
-  const totalPages = json.totalPages ?? 1;
 
   return (
     <div className="p-6 space-y-4">

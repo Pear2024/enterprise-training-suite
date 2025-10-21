@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 type TopicInput = {
@@ -123,10 +124,15 @@ export default function TopicForm({
         >
           {loading ? 'Saving…' : 'Save'}
         </button>
-        <a href="/topics" className="px-4 py-2 rounded-lg border">
+        <Link href="/topics" className="px-4 py-2 rounded-lg border">
           Cancel
-        </a>
+        </Link>
       </div>
     </form>
   )
 }
+
+
+
+
+

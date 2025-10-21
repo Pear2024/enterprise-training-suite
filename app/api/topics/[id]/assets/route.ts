@@ -63,9 +63,12 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     : [];
   const doneSet = new Set(progresses.filter((p) => p.completedAt).map((p) => p.assetId));
   // Question counts per asset (use any to avoid typegen dependency before generate)
-  const qs = assetIds.length ? await ((prisma as any).question.findMany({ where: { assetId: { in: assetIds } }, select: { assetId: true } })) : [];
+  const qs = assetIds.length
+    ? await prisma.question.findMany({ where: { assetId: { in: assetIds } }, select: { assetId: true } })
+    : [];
   const qCountMap = new Map<number, number>();
-  for (const q of qs as Array<{ assetId: number }>) {
+  for (const q of qs) {
+    if (q.assetId === null || q.assetId === undefined) continue;
     qCountMap.set(q.assetId, (qCountMap.get(q.assetId) || 0) + 1);
   }
 

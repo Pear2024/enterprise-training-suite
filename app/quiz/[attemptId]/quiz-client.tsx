@@ -108,6 +108,8 @@ export default function QuizClient({ attemptId }: { attemptId: number }) {
 
   const multi = q.type === 'MULTI_CHOICE';
   const selected = new Set(local.get(q.id)?.choiceIds ?? []);
+  const isChoiceQuestion =
+    q.type === 'SINGLE_CHOICE' || q.type === 'MULTI_CHOICE' || q.type === 'TRUE_FALSE';
 
   return (
     <main className="min-h-screen p-6 space-y-4">
@@ -119,7 +121,7 @@ export default function QuizClient({ attemptId }: { attemptId: number }) {
       <h2 className="text-lg font-semibold">{q.text}</h2>
 
       {/* ตัวเลือก / ข้อความ */}
-      {['SINGLE_CHOICE','MULTI_CHOICE','TRUE_FALSE'].includes(q.type) && (
+      {isChoiceQuestion ? (
         <div className="space-y-2">
           {q.choices.map(c => (
             <label key={c.id} className="flex items-center gap-2 cursor-pointer">
@@ -133,9 +135,9 @@ export default function QuizClient({ attemptId }: { attemptId: number }) {
             </label>
           ))}
         </div>
-      )}
+      ) : null}
 
-      {q.type === 'TEXT' && (
+      {q.type === 'TEXT' ? (
         <textarea
           className="w-full rounded-lg border p-2"
           rows={5}
@@ -143,7 +145,7 @@ export default function QuizClient({ attemptId }: { attemptId: number }) {
           onChange={e => setText(q.id, e.target.value)}
           placeholder="Type your answer here."
         />
-      )}
+      ) : null}
 
       {/* นำทาง + ส่งคำตอบ */}
       <div className="flex items-center justify-between pt-4">
@@ -174,3 +176,4 @@ export default function QuizClient({ attemptId }: { attemptId: number }) {
     </main>
   );
 }
+

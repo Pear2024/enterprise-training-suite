@@ -14,6 +14,30 @@ type Incoming = {
   answers: IncomingAnswer[];
 };
 
+function isIncomingAnswer(value: unknown): value is IncomingAnswer {
+  if (!value || typeof value !== 'object' || value === null) return false;
+  const maybe = value as Record<string, unknown>;
+  if (!Number.isFinite(maybe.questionId as number)) return false;
+  if ('choiceIds' in maybe) {
+    const list = maybe.choiceIds;
+    if (!Array.isArray(list) || !list.every((item) => Number.isFinite(item as number))) {
+      return false;
+    }
+  }
+  if ('textAnswer' in maybe) {
+    const txt = maybe.textAnswer;
+    if (txt !== null && typeof txt !== 'string') return false;
+  }
+  return true;
+}
+
+function isIncoming(value: unknown): value is Incoming {
+  if (!value || typeof value !== 'object' || value === null) return false;
+  const maybe = value as Record<string, unknown>;
+  if (!Array.isArray(maybe.answers)) return false;
+  return maybe.answers.every((entry) => isIncomingAnswer(entry));
+}
+
 export async function POST(req: Request, ctx: { params: Promise<{ attemptId: string }> }) {
   const session = await getSession();
   if (!session?.userId) {
@@ -26,7 +50,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
     return NextResponse.json({ error: 'Invalid attempt id' }, { status: 400 });
   }
 
-  const attempt = await (prisma as any).attempt.findFirst({
+  const attempt = await prisma.attempt.findFirst({
     where: { id, userId: session.userId },
     select: {
       id: true,
@@ -45,26 +69,20 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
     return NextResponse.json({ error: 'Already submitted' }, { status: 400 });
   }
 
-  let body: Incoming | null = null;
-  try {
-    body = (await req.json()) as Incoming;
-  } catch {
-    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-  }
-
-  if (!body || !Array.isArray(body.answers)) {
+  const raw = await req.json().catch(() => null);
+  if (!isIncoming(raw)) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
   }
 
   const map = new Map<number, { choiceIds: number[]; textAnswer: string | null }>();
-  for (const raw of body.answers) {
-    if (!raw || !Number.isFinite(raw.questionId)) continue;
-    const choiceIds = Array.isArray(raw.choiceIds) ? raw.choiceIds.filter((n) => Number.isFinite(n)) : [];
-    const textAnswer = raw.textAnswer ?? null;
-    map.set(raw.questionId, { choiceIds: Array.from(new Set(choiceIds)) as number[], textAnswer });
+  for (const entry of raw.answers) {
+    const choiceIds = Array.isArray(entry.choiceIds) ? entry.choiceIds.filter((n) => Number.isFinite(n)) : [];
+    const uniqueChoiceIds = Array.from(new Set(choiceIds));
+    const textAnswer = entry.textAnswer ?? null;
+    map.set(entry.questionId, { choiceIds: uniqueChoiceIds, textAnswer });
   }
 
-  const questions = await (prisma as any).question.findMany({
+  const questions = await prisma.question.findMany({
     where: attempt.assetId ? { assetId: attempt.assetId } : { topicId: attempt.assignment.topicId },
     orderBy: [{ order: 'asc' }, { id: 'asc' }],
     select: {
@@ -92,7 +110,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
     const answer = map.get(question.id) ?? { choiceIds: [], textAnswer: null };
     const validChoiceIds = Array.isArray(answer.choiceIds) ? answer.choiceIds : [];
 
-    const options = question.choices as Array<{ id: number; isCorrect: boolean }>;
+    const options = question.choices;
     const correctChoiceIds = new Set(options.filter((opt) => opt.isCorrect).map((opt) => opt.id));
 
     let isCorrect: boolean | null = null;
@@ -176,7 +194,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
     await prisma.$transaction(async (tx) => {
       await tx.attemptAnswer.deleteMany({ where: { attemptId: attempt.id } });
       await tx.attemptAnswer.createMany({ data: toCreate });
-      await (tx as any).attempt.update({
+      await tx.attempt.update({
         where: { id: attempt.id },
         data: {
           submittedAt: new Date(),
@@ -231,3 +249,6 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
 
   return NextResponse.json({ ok: true, score, passed });
 }
+
+
+
