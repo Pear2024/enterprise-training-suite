@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { Prisma } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
@@ -19,7 +20,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     await prisma.trainingTopic.delete({ where: { id: idNum } });
     return NextResponse.redirect(new URL('/topics?deleted=1', req.url), 303);
   } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+    if (e instanceof PrismaClientKnownRequestError && e.code === 'P2025') {
       return NextResponse.redirect(new URL('/topics?error=notfound', req.url), 303);
     }
     console.error('POST /topics/[id]/delete failed', e);
