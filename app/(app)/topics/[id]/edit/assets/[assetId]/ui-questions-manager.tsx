@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { QuestionType } from '@prisma/client';
+
+type QuestionType = 'SINGLE_CHOICE' | 'MULTI_CHOICE' | 'TRUE_FALSE' | 'TEXT';
 
 type Choice = { id: number; text: string; isCorrect: boolean; order: number };
 type Question = { id: number; type: QuestionType; text: string; order: number; points: number; choices: Choice[] };
@@ -178,3 +179,4 @@ export default function QuestionsManager({ assetId, initial }: { assetId: number
     </div>
   );
 }
+
