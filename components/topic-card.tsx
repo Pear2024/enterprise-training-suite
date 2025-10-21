@@ -1,0 +1,1 @@
+export default function TopicCard(){return <div className="border rounded-2xl p-4">Topic</div>;}

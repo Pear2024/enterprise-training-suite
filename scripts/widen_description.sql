@@ -1,0 +1,2 @@
+ALTER TABLE `TrainingTopic`
+  MODIFY COLUMN `description` MEDIUMTEXT NULL;

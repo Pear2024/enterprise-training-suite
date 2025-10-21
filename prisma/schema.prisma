@@ -1,0 +1,273 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Department {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+}
+
+model User {
+  id            Int             @id @default(autoincrement())
+  email         String          @unique
+  username      String          @unique
+  passwordHash  String
+  role          UserRole        @default(EMPLOYEE)
+  firstName     String?
+  lastName      String?
+  departmentId  Int?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  assignments   Assignment[]
+  attempts      Attempt[]
+  completions   Completion[]
+  ImportJob     ImportJob[]
+  createdTopics TrainingTopic[] @relation("TopicCreatedBy")
+  department    Department?     @relation(fields: [departmentId], references: [id])
+
+  @@index([departmentId])
+}
+
+model Question {
+  id        Int             @id @default(autoincrement())
+  topicId   Int
+  assetId   Int?
+  type      QuestionType
+  text      String
+  order     Int             @default(1)
+  points    Int             @default(1)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  answers   AttemptAnswer[]
+  choices   Choice[]
+  topic     TrainingTopic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  asset     TrainingAsset?  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
+  @@index([assetId])
+}
+
+model Choice {
+  id            Int             @id @default(autoincrement())
+  questionId    Int
+  text          String
+  isCorrect     Boolean         @default(false)
+  order         Int             @default(1)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  AttemptAnswer AttemptAnswer[] @relation("AttemptAnswerChoice")
+  question      Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+model Assignment {
+  id         Int              @id @default(autoincrement())
+  userId     Int
+  topicId    Int
+  status     AssignmentStatus @default(ASSIGNED)
+  dueAt      DateTime?
+  assignedAt DateTime         @default(now())
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  topic      TrainingTopic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts   Attempt[]
+
+  @@unique([userId, topicId], name: "uniq_user_topic_once")
+  @@index([userId, topicId])
+  @@index([status])
+  @@index([topicId], map: "Assignment_topicId_fkey")
+}
+
+model Attempt {
+  id           Int             @id @default(autoincrement())
+  assignmentId Int
+  userId       Int
+  assetId      Int?
+  startedAt    DateTime        @default(now())
+  submittedAt  DateTime?
+  score        Decimal?        @db.Decimal(5, 2)
+  passed       Boolean?
+  createdAt    DateTime        @default(now())
+  assignment   Assignment      @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  asset        TrainingAsset?  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers      AttemptAnswer[]
+
+  @@index([assignmentId])
+  @@index([userId])
+  @@index([assetId])
+}
+
+model AttemptAnswer {
+  id            Int      @id @default(autoincrement())
+  attemptId     Int
+  questionId    Int
+  choiceId      Int?
+  textAnswer    String?  @db.Text
+  isCorrect     Boolean?
+  pointsAwarded Int?
+  createdAt     DateTime @default(now())
+  attempt       Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  choice        Choice?  @relation("AttemptAnswerChoice", fields: [choiceId], references: [id])
+  question      Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
+  @@index([questionId])
+  @@index([choiceId])
+}
+
+model Completion {
+  id             Int           @id @default(autoincrement())
+  userId         Int
+  topicId        Int
+  completedAt    DateTime      @default(now())
+  score          Decimal?      @db.Decimal(5, 2)
+  certificateUrl String?
+  topic          TrainingTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId], name: "uniq_completion_per_topic")
+  @@index([userId, topicId])
+  @@index([topicId], map: "Completion_topicId_fkey")
+}
+
+model ImportJob {
+  id          Int          @id @default(autoincrement())
+  type        ImportType
+  status      ImportStatus @default(PENDING)
+  createdById Int
+  summary     Json?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdBy   User         @relation(fields: [createdById], references: [id])
+  rows        ImportRow[]
+
+  @@index([type, status])
+  @@index([createdById], map: "ImportJob_createdById_fkey")
+}
+
+model ImportRow {
+  id        Int             @id @default(autoincrement())
+  jobId     Int
+  rowNumber Int
+  data      Json
+  status    ImportRowStatus
+  errorMsg  String?
+  job       ImportJob       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId, status])
+}
+
+model TrainingTopic {
+  id          Int             @id @default(autoincrement())
+  code        String          @unique
+  title       String
+  description String?         @db.MediumText
+  status      TopicStatus     @default(ACTIVE)
+  createdById Int
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  assignments Assignment[]
+  completions Completion[]
+  questions   Question[]
+  assets      TrainingAsset[]
+  createdBy   User            @relation("TopicCreatedBy", fields: [createdById], references: [id])
+
+  @@index([status])
+  @@index([createdById])
+}
+
+model TrainingAsset {
+  id           Int           @id @default(autoincrement())
+  topicId      Int
+  type         AssetType
+  title        String
+  url          String?
+  htmlContent  String?
+  order        Int           @default(1)
+  isRequired   Boolean       @default(true)
+  durationSec  Int?
+  thumbnailUrl String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  topic        TrainingTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  questions    Question[]
+  attempts     Attempt[]
+
+  @@index([topicId, type])
+}
+
+model AssetProgress {
+  id           Int       @id @default(autoincrement())
+  assignmentId Int
+  assetId      Int
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+
+  @@unique([assignmentId, assetId])
+  @@index([assignmentId, assetId])
+}
+
+enum UserRole {
+  ADMIN
+  TRAINER
+  EMPLOYEE
+}
+
+enum TopicStatus {
+  ACTIVE
+  ARCHIVED
+  DRAFT
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTI_CHOICE
+  TRUE_FALSE
+  TEXT
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+enum ImportType {
+  USERS
+  DEPARTMENTS
+  TOPICS
+  QUESTIONS
+  ASSIGNMENTS
+}
+
+enum ImportStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+enum ImportRowStatus {
+  OK
+  ERROR
+}
+
+enum AssetType {
+  VIDEO
+  IMAGE
+  PDF
+  LINK
+  HTML
+}
