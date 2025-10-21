@@ -1,8 +1,11 @@
-import { AssignmentStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+
+const { AssignmentStatus } = Prisma;
+type AssignmentStatusType = Prisma.AssignmentStatus;
 import { getSession, hasRole } from '@/lib/auth';
 import { getReportsOverview, ReportsOverview } from '@/lib/reporting';
 
-const statusLabels: Record<AssignmentStatus, string> = {
+const statusLabels: Record<AssignmentStatusType, string> = {
   [AssignmentStatus.ASSIGNED]: 'Assigned',
   [AssignmentStatus.IN_PROGRESS]: 'In Progress',
   [AssignmentStatus.COMPLETED]: 'Completed',
@@ -153,3 +156,4 @@ function EmptyState({ message }: { message: string }) {
     </div>
   );
 }
+
