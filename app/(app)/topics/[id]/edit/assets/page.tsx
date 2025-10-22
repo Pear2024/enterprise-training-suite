@@ -1,9 +1,9 @@
 import { prisma } from '@/lib/db';
-import AssetsManager from './ui-assets-manager';
+import AssetsManager, { AssetRow, AssetType } from './ui-assets-manager';
 
 type RawAsset = {
   id: number;
-  type: string;
+  type: AssetType;
   title: string;
   url: string | null;
   htmlContent: string | null;
@@ -42,8 +42,9 @@ export default async function EditAssetsPage({ params }: { params: Promise<{ id:
     },
   });
 
-  const initial = assets.map((asset) => ({
+  const initial: AssetRow[] = assets.map((asset) => ({
     ...asset,
+    type: asset.type as AssetType,
     durationSec: asset.durationSec ?? null,
     thumbnailUrl: asset.thumbnailUrl ?? null,
     url: asset.url ?? null,
@@ -65,3 +66,5 @@ export default async function EditAssetsPage({ params }: { params: Promise<{ id:
     </main>
   );
 }
+
+

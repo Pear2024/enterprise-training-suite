@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 
-type AssetType = 'VIDEO' | 'IMAGE' | 'PDF' | 'LINK' | 'HTML';
+export type AssetType = 'VIDEO' | 'IMAGE' | 'PDF' | 'LINK' | 'HTML';
 
-type AssetRow = {
+export type AssetRow = {
   id: number;
   type: AssetType;
   title: string;
@@ -211,4 +211,5 @@ function EditRow({ row, busy, onCancel, onSave }: { row: AssetRow; busy: boolean
     </div>
   );
 }
+
 
