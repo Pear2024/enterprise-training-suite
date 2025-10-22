@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { AssetType } from '@prisma/client';
+
+type AssetType = 'VIDEO' | 'IMAGE' | 'PDF' | 'LINK' | 'HTML';
 
 type AssetRow = {
   id: number;
@@ -210,3 +211,4 @@ function EditRow({ row, busy, onCancel, onSave }: { row: AssetRow; busy: boolean
     </div>
   );
 }
+
