@@ -23,7 +23,8 @@
     "check": "pnpm lint && pnpm typecheck",
     "lint:watch": "eslint . --watch",
     "typecheck:watch": "tsc --noEmit --watch",
-    "dev:quality": "concurrently \"pnpm lint:watch\" \"pnpm typecheck:watch\""
+    "dev:quality": "concurrently \"pnpm lint:watch\" \"pnpm typecheck:watch\"",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "6.17.0",
