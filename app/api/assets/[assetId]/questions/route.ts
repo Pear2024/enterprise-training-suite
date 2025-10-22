@@ -3,8 +3,8 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSession, hasRole } from '@/lib/auth';
-import { QuestionType } from '@prisma/client';
 
+type QuestionType = 'SINGLE_CHOICE' | 'MULTI_CHOICE' | 'TRUE_FALSE' | 'TEXT';
 type CreatePayload = {
   type: QuestionType;
   text: string;
@@ -40,4 +40,3 @@ export async function POST(req: Request, ctx: { params: Promise<{ assetId: strin
   });
   return NextResponse.json({ ok: true, id: q.id }, { status: 201 });
 }
-
