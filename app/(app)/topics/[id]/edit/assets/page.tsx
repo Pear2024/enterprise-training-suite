@@ -1,6 +1,18 @@
 import { prisma } from '@/lib/db';
 import AssetsManager from './ui-assets-manager';
 
+type RawAsset = {
+  id: number;
+  type: string;
+  title: string;
+  url: string | null;
+  htmlContent: string | null;
+  order: number;
+  isRequired: boolean;
+  durationSec: number | null;
+  thumbnailUrl: string | null;
+};
+
 export default async function EditAssetsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const topicId = Number(id);
@@ -14,7 +26,7 @@ export default async function EditAssetsPage({ params }: { params: Promise<{ id:
   });
   if (!topic) return <main className="p-6">Topic not found</main>;
 
-  const assets = await prisma.trainingAsset.findMany({
+  const assets: RawAsset[] = await prisma.trainingAsset.findMany({
     where: { topicId },
     orderBy: { order: 'asc' },
     select: {
@@ -30,12 +42,12 @@ export default async function EditAssetsPage({ params }: { params: Promise<{ id:
     },
   });
 
-  const initial = assets.map((a) => ({
-    ...a,
-    durationSec: a.durationSec ?? null,
-    thumbnailUrl: a.thumbnailUrl ?? null,
-    url: a.url ?? null,
-    htmlContent: a.htmlContent ?? null,
+  const initial = assets.map((asset) => ({
+    ...asset,
+    durationSec: asset.durationSec ?? null,
+    thumbnailUrl: asset.thumbnailUrl ?? null,
+    url: asset.url ?? null,
+    htmlContent: asset.htmlContent ?? null,
   }));
 
   return (
