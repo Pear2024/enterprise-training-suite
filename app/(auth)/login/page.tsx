@@ -19,7 +19,7 @@ export default function LoginPage() {
       body: JSON.stringify({ username: fd.get('username'), password: fd.get('password') })
     })
     setLoading(false)
-    if (!res.ok) { setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'); return }
+    if (!res.ok) { setError('The username or password is incorrect.'); return }
     const j = await res.json()
     router.replace((sp.get('next') || j.redirectTo || '/') as string)
     router.refresh();
