@@ -241,10 +241,6 @@ types/                      – shared TypeScript definitions
 - **Schema drift warnings**  
   - Latest migrations already contain idempotent guards (notably `20251021172000_add_attempt_asset_column`). If Prisma still reports drift, inspect the migration and rerun `pnpm prisma migrate deploy`.
 
-- **SSL certificate / self-signed CA**  
-  - สำหรับ production ตั้งค่า `AIVEN_CA_B64` เป็น base64 ของไฟล์ `.pem` แล้ว redeploy โค้ดใน `lib/db.ts` จะ decode และตั้ง `NODE_EXTRA_CA_CERTS` ให้อัตโนมัติ  
-  - สำหรับ dev environment สามารถใช้ `sslaccept=strict&sslcert=./prisma/aiven-ca.pem` หรือการตั้งค่า SSL แบบที่ฐานข้อมูลรองรับได้ตามสะดวก
-
 - **Auth tests fail with `ECONNREFUSED`**  
   - Start the dev server (`pnpm dev`) before running `pnpm test`, or use `pnpm test:api` to auto-start.
 
