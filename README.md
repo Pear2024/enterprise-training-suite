@@ -48,7 +48,7 @@ Training System is an internal learning & compliance platform built with Next.js
 
 - **Node.js** v20 or newer  
 - **pnpm** v10 (matching `packageManager` entry)  
-- **MySQL** database (local or hosted). SSL certificate support is included (see `prisma/aiven-ca.pem`).  
+- **MySQL** database (local or hosted). SSL certificate support is included (see `prisma/aiven-ca.pem` or the base64 variant via `AIVEN_CA_B64`).  
 - Ability to run Prisma CLI and `tsx` (bundled in dev dependencies).
 
 ---
@@ -63,10 +63,13 @@ Training System is an internal learning & compliance platform built with Next.js
 2. **Configure environment variables**  
    Copy `.env` and update the values:
    ```dotenv
-   DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE?sslaccept=strict&sslcert=./aiven-ca.pem"
+   DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE?sslaccept=strict"
    JWT_SECRET="replace-with-strong-random-string"
+   # Optional: place your database CA certificate (PEM) as base64 here for hosted DBs such as Aiven
+   # AIVEN_CA_B64="$(base64 -w0 prisma/aiven-ca.pem)"
    ```
-   Adjust SSL options or certificate path to match your database provider.
+   - สำหรับการพัฒนาในเครื่องยังสามารถใช้ `sslcert=./aiven-ca.pem` ได้หากไคลเอนต์รองรับ  
+   - บน production (เช่น Vercel) ให้ตั้ง `AIVEN_CA_B64` เพื่อให้โค้ดเขียนไฟล์ cert ชั่วคราวใน runtime
 
 3. **Apply database schema (development)**
    ```bash
@@ -236,10 +239,11 @@ types/                      – shared TypeScript definitions
   - Ensure `DATABASE_URL` is provided when running the container or compose stack so migrations can run. For development, you can reuse the compose MySQL instance connection string.
 
 - **Schema drift warnings**  
-  - The project includes manual SQL migrations (`20251021171000_add_question_asset_relation`, `20251021172000_add_attempt_asset_column`) to reconcile shared dev DBs. Execute them with `pnpm prisma db execute`.
+  - Latest migrations already contain idempotent guards (notably `20251021172000_add_attempt_asset_column`). If Prisma still reports drift, inspect the migration and rerun `pnpm prisma migrate deploy`.
 
-- **Missing SSL certificate**  
-  - Update the `sslcert` parameter in `DATABASE_URL` or remove it if not required by your provider.
+- **SSL certificate / self-signed CA**  
+  - สำหรับ production ตั้งค่า `AIVEN_CA_B64` เป็น base64 ของไฟล์ `.pem` แล้ว redeploy โค้ดใน `lib/db.ts` จะ decode และตั้ง `NODE_EXTRA_CA_CERTS` ให้อัตโนมัติ  
+  - สำหรับ dev environment สามารถใช้ `sslaccept=strict&sslcert=./prisma/aiven-ca.pem` หรือการตั้งค่า SSL แบบที่ฐานข้อมูลรองรับได้ตามสะดวก
 
 - **Auth tests fail with `ECONNREFUSED`**  
   - Start the dev server (`pnpm dev`) before running `pnpm test`, or use `pnpm test:api` to auto-start.
