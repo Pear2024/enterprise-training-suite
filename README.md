@@ -68,8 +68,8 @@ Training System is an internal learning & compliance platform built with Next.js
    # Optional: place your database CA certificate (PEM) as base64 here for hosted DBs such as Aiven
    # AIVEN_CA_B64="$(base64 -w0 prisma/aiven-ca.pem)"
    ```
-   - สำหรับการพัฒนาในเครื่องยังสามารถใช้ `sslcert=./aiven-ca.pem` ได้หากไคลเอนต์รองรับ  
-   - บน production (เช่น Vercel) ให้ตั้ง `AIVEN_CA_B64` เพื่อให้โค้ดเขียนไฟล์ cert ชั่วคราวใน runtime
+   - For local development, you can still use sslcert=./aiven-ca.pem if the client supports it. 
+   - On production (e.g., Vercel), set AIVEN_CA_B64 so that the code can generate a temporary certificate file at runtime.
 
 3. **Apply database schema (development)**
    ```bash
