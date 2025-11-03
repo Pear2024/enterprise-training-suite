@@ -240,9 +240,19 @@ types/                      – shared TypeScript definitions
 
 - **Schema drift warnings**  
   - Latest migrations already contain idempotent guards (notably `20251021172000_add_attempt_asset_column`). If Prisma still reports drift, inspect the migration and rerun `pnpm prisma migrate deploy`.
-
+- **SSL certificate / self-signed CA**  
+  - For production, set AIVEN_CA_B64 to the Base64-encoded contents of the .pem file and redeploy. The code in lib/db.ts will automatically decode it and configure NODE_EXTRA_CA_CERTS.
+  - For the dev environment, you can use sslaccept=strict&sslcert=./prisma/aiven-ca.pem, or configure SSL in any other way supported by your database.
 - **Auth tests fail with `ECONNREFUSED`**  
   - Start the dev server (`pnpm dev`) before running `pnpm test`, or use `pnpm test:api` to auto-start.
+
+---
+
+Engineering Principles
+
+Adaptive AI Operations
+
+Successful AI products don’t rely on a “perfect” model — they are built on flexible, responsive MLOps systems that can handle issues systematically. This codebase prioritizes easily verifiable pipelines (complete linting, type checks, and testing), documented decision-making (README/ADR), and automation scripts that enable quick fixes or rollbacks when needed.
 
 ---
 

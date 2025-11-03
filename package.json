@@ -28,7 +28,10 @@
   },
   "dependencies": {
     "@prisma/client": "6.17.0",
+    "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
+    "dotenv": "^17.2.3",
+    "googleapis": "^164.1.0",
     "jose": "^6.1.0",
     "next": "15.5.4",
     "react": "19.1.0",
@@ -43,6 +46,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "10",
+    "concurrently": "^9.0.1",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
     "globby": "^14.1.0",
@@ -56,8 +60,7 @@
     "typescript": "^5",
     "undici": "^7.16.0",
     "vitest": "^3.2.4",
-    "wait-on": "^9.0.1",
-    "concurrently": "^9.0.1"
+    "wait-on": "^9.0.1"
   },
   "packageManager": "pnpm@10.18.1+sha512.77a884a165cbba2d8d1c19e3b4880eee6d2fcabd0d879121e282196b80042351d5eb3ca0935fa599da1dc51265cc68816ad2bddd2a2de5ea9fdf92adbec7cd34"
 }

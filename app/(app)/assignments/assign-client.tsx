@@ -3,7 +3,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-type UserItem = { id: number; username: string; email?: string | null; role: 'ADMIN'|'TRAINER'|'EMPLOYEE' };
+type UserItem = {
+  id: number;
+  username: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  role: 'ADMIN' | 'TRAINER' | 'EMPLOYEE';
+  department?: { name: string | null } | null;
+};
 type TopicItem = { id: number; code: string; title: string; status?: string };
 
 type PageResp<T> = { items: T[]; page: number; pageSize: number; total: number; totalPages: number };
@@ -118,7 +126,19 @@ export default function AssignClient() {
             {users.items.map((u) => (
               <label key={u.id} className="flex cursor-pointer items-center gap-2 border-b px-2 py-1 text-sm">
                 <input type="checkbox" checked={selectedUsers.includes(u.id)} onChange={() => toggle(u.id, selectedUsers, setSelectedUsers)} />
-                <span className="truncate">{u.username} ({u.role})</span>
+                <span className="truncate">
+                  {u.username}
+                  {(u.firstName || u.lastName) && (
+                    <> — {`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim()}</>
+                  )}
+                  {(() => {
+                    const departmentName = u.department?.name?.trim();
+                    if (departmentName) {
+                      return <> ({departmentName})</>;
+                    }
+                    return <> ({u.role})</>;
+                  })()}
+                </span>
               </label>
             ))}
             {!users.items.length && <div className="p-2 text-sm text-gray-500">No users</div>}

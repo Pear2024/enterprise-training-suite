@@ -39,7 +39,15 @@ export async function GET(req: Request) {
       orderBy: { username: 'asc' },
       skip,
       take,
-      select: { id: true, username: true, email: true, role: true },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        firstName: true,
+        lastName: true,
+        department: { select: { name: true } },
+      },
     }),
   ]);
 
