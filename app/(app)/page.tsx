@@ -23,8 +23,21 @@ export default async function Home() {
   }
 
   const h = await headers()
-  const host = h.get('host') ?? 'localhost:3000'
+  const hostHeader = h.get('host') ?? 'localhost:3000'
   const protoHeader = h.get('x-forwarded-proto') ?? 'http'
+
+  let host = hostHeader
+  if (host.startsWith('localhost')) {
+    host = host.replace('localhost', '127.0.0.1')
+  } else if (host.startsWith('[')) {
+    const ipv6 = host.match(/^\[([^\]]+)\](?::(\d+))?$/)
+    if (ipv6 && ipv6[1] === '::1') {
+      host = `127.0.0.1${ipv6[2] ? `:${ipv6[2]}` : ''}`
+    }
+  } else if (host === '::1') {
+    host = '127.0.0.1'
+  }
+
   const baseUrl = `${protoHeader}://${host}`
   const cookie = h.get('cookie') ?? ''
 

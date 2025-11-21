@@ -1,6 +1,8 @@
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
+import { AssignmentStatus } from '@prisma/client';
+
 import { prisma } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
@@ -24,6 +26,15 @@ export async function POST(req: Request) {
     where: { assignmentId_assetId: { assignmentId, assetId } },
     update: { completedAt: new Date() },
     create: { assignmentId, assetId, completedAt: new Date() },
+  });
+
+  await prisma.assignment.updateMany({
+    where: {
+      id: assignmentId,
+      userId: session.userId,
+      status: AssignmentStatus.ASSIGNED,
+    },
+    data: { status: AssignmentStatus.IN_PROGRESS },
   });
 
   return NextResponse.json({ ok: true });

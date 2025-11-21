@@ -11,14 +11,16 @@ import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const baseUrl = req.headers.get("origin") ?? new URL(req.url).origin;
+
   const session = await getSession();
-  if (!session) return NextResponse.redirect(new URL("/topics?error=unauth", req.url), 303);
+  if (!session) return NextResponse.redirect(new URL("/topics?error=unauth", baseUrl), 303);
   
-  if (session.role === "EMPLOYEE") return NextResponse.redirect(new URL("/topics?error=forbidden", req.url), 303);
+  if (session.role === "EMPLOYEE") return NextResponse.redirect(new URL("/topics?error=forbidden", baseUrl), 303);
 
   const { id } = await ctx.params;
   const idNum = Number(id);
-  if (!Number.isInteger(idNum)) return NextResponse.redirect(new URL("/topics?error=badid", req.url), 303);
+  if (!Number.isInteger(idNum)) return NextResponse.redirect(new URL("/topics?error=badid", baseUrl), 303);
 
   const fd = await req.formData();
   const payload = {
@@ -43,15 +45,15 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
         status: data.status,
       },
     });
-    return NextResponse.redirect(new URL("/topics?updated=1", req.url), 303);
+    return NextResponse.redirect(new URL("/topics?updated=1", baseUrl), 303);
   } catch (e: unknown) {
     if (e instanceof ZodError) {
-      return NextResponse.redirect(new URL(`/topics/${id}/edit?error=invalid`, req.url), 303);
+      return NextResponse.redirect(new URL(`/topics/${id}/edit?error=invalid`, baseUrl), 303);
     }
     if (e instanceof PrismaClientKnownRequestError && e.code === "P2025") {
-      return NextResponse.redirect(new URL("/topics?error=notfound", req.url), 303);
+      return NextResponse.redirect(new URL("/topics?error=notfound", baseUrl), 303);
     }
     console.error("POST /topics/[id]/edit/submit failed", e);
-    return NextResponse.redirect(new URL(`/topics/${id}/edit?error=update_failed`, req.url), 303);
+    return NextResponse.redirect(new URL(`/topics/${id}/edit?error=update_failed`, baseUrl), 303);
   }
 }

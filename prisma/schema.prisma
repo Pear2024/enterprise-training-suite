@@ -100,6 +100,7 @@ model Attempt {
   submittedAt  DateTime?
   score        Decimal?        @db.Decimal(5, 2)
   passed       Boolean?
+  correctCount Int             @default(0)
   createdAt    DateTime        @default(now())
   assignment   Assignment      @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   asset        TrainingAsset?  @relation(fields: [assetId], references: [id], onDelete: Cascade)
@@ -196,11 +197,12 @@ model TrainingAsset {
   type         AssetType
   title        String
   url          String?
-  htmlContent  String?
+  htmlContent  String?       @db.LongText
   order        Int           @default(1)
   isRequired   Boolean       @default(true)
   durationSec  Int?
   thumbnailUrl String?
+  quizFeedbackJson String?     @db.LongText
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   topic        TrainingTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
@@ -219,6 +221,78 @@ model AssetProgress {
 
   @@unique([assignmentId, assetId])
   @@index([assignmentId, assetId])
+}
+
+model LabelTemplate {
+  id               Int               @id @default(autoincrement())
+  name             String            @unique
+  description      String?
+  payload          Json
+  qrConfig         Json?
+  defaultWidthMm   Decimal?          @db.Decimal(10, 2)
+  defaultHeightMm  Decimal?          @db.Decimal(10, 2)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  printerProfiles  PrinterProfile[]  @relation("PrinterDefaultTemplate")
+  sequences        LabelSequence[]
+  jobs             LabelJob[]
+}
+
+model PrinterProfile {
+  id                 Int              @id @default(autoincrement())
+  name               String           @unique
+  driver             String
+  location           String?
+  networkAddress     String?
+  dpi                Int?
+  widthMm            Decimal?         @db.Decimal(10, 2)
+  heightMm           Decimal?         @db.Decimal(10, 2)
+  marginXmm          Decimal?         @db.Decimal(10, 2)
+  marginYmm          Decimal?         @db.Decimal(10, 2)
+  defaultTemplateId  Int?
+  calibrationPayload Json?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  defaultTemplate    LabelTemplate?   @relation("PrinterDefaultTemplate", fields: [defaultTemplateId], references: [id])
+  jobs               LabelJob[]
+}
+
+model LabelSequence {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  templateId  Int?
+  prefix      String?
+  lastValue   Int          @default(0)
+  step        Int          @default(1)
+  padding     Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  template    LabelTemplate? @relation(fields: [templateId], references: [id])
+  jobs        LabelJob[]
+}
+
+model LabelJob {
+  id            Int              @id @default(autoincrement())
+  templateId    Int
+  printerId     Int?
+  sequenceId    Int?
+  serialValue   Int?
+  serial        String?
+  payload       Json
+  status        LabelJobStatus   @default(PENDING)
+  errorMessage  String?
+  renderedAt    DateTime?
+  printedAt     DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  template      LabelTemplate    @relation(fields: [templateId], references: [id])
+  printer       PrinterProfile?  @relation(fields: [printerId], references: [id])
+  sequence      LabelSequence?   @relation(fields: [sequenceId], references: [id])
+
+  @@index([templateId])
+  @@index([printerId])
+  @@index([status])
+  @@unique([sequenceId, serialValue], map: "uniq_sequence_serial")
 }
 
 enum UserRole {
@@ -273,4 +347,12 @@ enum AssetType {
   PDF
   LINK
   HTML
+}
+
+enum LabelJobStatus {
+  PENDING
+  PROCESSING
+  PRINTED
+  FAILED
+  CANCELED
 }

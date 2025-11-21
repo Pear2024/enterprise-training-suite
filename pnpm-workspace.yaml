@@ -1,3 +1,8 @@
+ignoredBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - esbuild
+  - unrs-resolver
+
 onlyBuiltDependencies:
   - '@prisma/client'
   - '@prisma/engines'

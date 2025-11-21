@@ -1,6 +1,8 @@
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
+import { AssignmentStatus } from '@prisma/client';
+
 import { prisma } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 
@@ -95,6 +97,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
 
   let totalPoints = 0;
   let earnedPoints = 0;
+  let correctCount = 0;
 
   const toCreate: {
     attemptId: number;
@@ -122,6 +125,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
         const chosen = validChoiceIds[0] ?? null;
         isCorrect = chosen != null && correctChoiceIds.has(chosen);
         pointsAwarded = isCorrect ? question.points : 0;
+        if (isCorrect && question.points > 0) {
+          correctCount += 1;
+        }
         toCreate.push({
           attemptId: attempt.id,
           questionId: question.id,
@@ -138,6 +144,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
           [...chosenSet].every((cid) => correctChoiceIds.has(cid));
         isCorrect = matches;
         pointsAwarded = isCorrect ? question.points : 0;
+        if (isCorrect && question.points > 0) {
+          correctCount += 1;
+        }
 
         if (chosenSet.size === 0) {
           toCreate.push({
@@ -157,6 +166,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
               pointsAwarded,
             });
           }
+        }
+        if (isCorrect && question.points > 0) {
+          correctCount += 1;
         }
         break;
       }
@@ -200,6 +212,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
           submittedAt: new Date(),
           score,
           passed,
+          correctCount,
         },
       });
 
@@ -233,6 +246,18 @@ export async function POST(req: Request, ctx: { params: Promise<{ attemptId: str
           update: {
             score,
           },
+        });
+        await tx.assignment.update({
+          where: { id: attempt.assignmentId },
+          data: { status: AssignmentStatus.COMPLETED },
+        });
+      } else {
+        await tx.assignment.updateMany({
+          where: {
+            id: attempt.assignmentId,
+            status: AssignmentStatus.ASSIGNED,
+          },
+          data: { status: AssignmentStatus.IN_PROGRESS },
         });
       }
     });

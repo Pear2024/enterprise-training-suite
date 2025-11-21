@@ -1,16 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import type { QuestionAnswerStat } from '@/lib/question-stats';
 
 type QuestionType = 'SINGLE_CHOICE' | 'MULTI_CHOICE' | 'TRUE_FALSE' | 'TEXT';
 
 type Choice = { id: number; text: string; isCorrect: boolean; order: number };
 type Question = { id: number; type: QuestionType; text: string; order: number; points: number; choices: Choice[] };
-
-export default function QuestionsManager({ assetId, initial }: { assetId: number; initial: Question[] }) {
+export default function QuestionsManager({
+  assetId,
+  initial,
+  stats,
+}: {
+  assetId: number;
+  initial: Question[];
+  stats: QuestionAnswerStat[];
+}) {
   const [items, setItems] = useState<Question[]>(initial);
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<{ type: QuestionType; text: string; order: number; points: number }>({ type: 'SINGLE_CHOICE', text: '', order: (initial[initial.length - 1]?.order ?? 0) + 1, points: 1 });
+  const statsByQuestion = useMemo(() => {
+    return new Map(stats.map((entry) => [entry.questionId, entry]));
+  }, [stats]);
   const adjustNumberWidth = (input: HTMLInputElement | null) => {
     if (!input) return;
     const len = input.value.length || 1;
@@ -118,8 +129,15 @@ export default function QuestionsManager({ assetId, initial }: { assetId: number
       <section className="rounded-2xl border p-4">
         <h2 className="mb-2 font-semibold">Questions</h2>
         <div className="space-y-4">
-          {items.map((q, idx) => (
-            <div key={q.id} className="rounded-xl border p-3">
+          {items.map((q, idx) => {
+            const stat = statsByQuestion.get(q.id);
+            const totalResponses = stat?.totalResponses ?? 0;
+            const textResponses = stat?.textResponses ?? 0;
+            const choiceCountMap = new Map(
+              (stat?.choiceCounts ?? []).map((entry) => [entry.choiceId, entry.count] as const),
+            );
+            return (
+              <div key={q.id} className="rounded-xl border p-3">
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                 <label className="block text-sm">Type
                   <select className="mt-1 w-full rounded border p-2" value={q.type} onChange={(e) => setQ(idx, 'type', e.target.value as QuestionType)}>
@@ -143,36 +161,47 @@ export default function QuestionsManager({ assetId, initial }: { assetId: number
                   <button onClick={() => addChoice(q)} className="rounded border px-3 py-1 text-sm">Add choice</button>
                 )}
               </div>
+              <div className="mt-3 text-xs text-gray-600 space-y-1">
+                <div>Total responses recorded: {totalResponses}</div>
+                {q.type === 'TEXT' && (
+                  <div>Text responses submitted: {textResponses}</div>
+                )}
+              </div>
               {(q.type !== 'TEXT') && (
                 <div className="mt-3 text-sm">
                   <div className="font-medium mb-1">Choices</div>
                   <ul className="space-y-1">
-                    {q.choices.map((c) => (
-                      <li key={c.id} className="flex items-center gap-2">
-                        <input
-                          className="rounded border px-1 py-0.5 text-right"
-                          type="number"
-                          defaultValue={c.order}
-                          ref={adjustNumberWidth}
-                          onInput={(e) => adjustNumberWidth(e.currentTarget)}
-                          onBlur={(e) => {
-                            adjustNumberWidth(e.currentTarget);
-                            saveChoice(c.id, { order: Number(e.target.value) });
-                          }}
-                        />
-                        <input className="flex-1 rounded border px-2 py-1" defaultValue={c.text} onBlur={(e) => saveChoice(c.id, { text: e.target.value })} />
-                        <label className="inline-flex items-center gap-1">
-                          <input type="checkbox" defaultChecked={c.isCorrect} onChange={(e) => saveChoice(c.id, { isCorrect: e.target.checked })} />
-                          Correct
-                        </label>
-                        <button onClick={() => deleteChoice(c.id)} className="rounded border px-2 py-1">Delete</button>
-                      </li>
-                    ))}
+                    {q.choices.map((c) => {
+                      const choiceCount = choiceCountMap.get(c.id) ?? 0;
+                      return (
+                        <li key={c.id} className="flex items-center gap-2">
+                          <span className="text-xs text-gray-500 min-w-[4rem] text-right">{choiceCount} votes</span>
+                          <input
+                            className="rounded border px-1 py-0.5 text-right"
+                            type="number"
+                            defaultValue={c.order}
+                            ref={adjustNumberWidth}
+                            onInput={(e) => adjustNumberWidth(e.currentTarget)}
+                            onBlur={(e) => {
+                              adjustNumberWidth(e.currentTarget);
+                              saveChoice(c.id, { order: Number(e.target.value) });
+                            }}
+                          />
+                          <input className="flex-1 rounded border px-2 py-1" defaultValue={c.text} onBlur={(e) => saveChoice(c.id, { text: e.target.value })} />
+                          <label className="inline-flex items-center gap-1">
+                            <input type="checkbox" defaultChecked={c.isCorrect} onChange={(e) => saveChoice(c.id, { isCorrect: e.target.checked })} />
+                            Correct
+                          </label>
+                          <button onClick={() => deleteChoice(c.id)} className="rounded border px-2 py-1">Delete</button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
           {items.length === 0 && <div className="text-sm text-gray-500">No questions</div>}
         </div>
       </section>
